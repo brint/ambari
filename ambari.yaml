@@ -1,0 +1,86 @@
+heat_template_version: 2013-05-23
+
+description: Heat Template to deploy Ambari on a Cloud Server
+
+parameters:
+  flavor:
+    label: Server Size
+    type: string
+    default: 1 GB Performance
+
+  image:
+    label: Operating System
+    type: string
+    default: CentOS 6.5 (PVHVM)
+
+  server_name:
+    label: Server Hostname
+    type: string
+    default: linux-server
+
+  username:
+    label: Username
+    type: string
+    default: admin
+
+  kitchen:
+    label: Kitchen
+    description: URL for the kitchen to use
+    type: string
+    default: https://github.com/brint/ambari
+
+  chef_version:
+    label: Chef Version
+    description: Version of chef client to use
+    type: string
+    default: 11.16.2
+
+resources:
+  ssh_key:
+    type: "OS::Nova::KeyPair"
+    properties:
+      name: { get_param: "OS::stack_id" }
+      save_private_key: true
+
+  ambari_password:
+    type: "OS::Heat::RandomString"
+    properties:
+      length: 16
+      sequence: lettersdigits
+
+  ambari_server:
+    type: "OS::Nova::Server"
+    properties:
+      key_name: { get_resource: ssh_key }
+      flavor: { get_param: flavor }
+      image: { get_param: image }
+      name: { get_param: server_name }
+
+  ambari_setup:
+    type: "OS::Heat::ChefSolo"
+    depends_on: chef_server
+    properties:
+      username: root
+      private_key: { get_attr: [ssh_key, private_key] }
+      host: { get_attr: [linux_server, accessIPv4] }
+      kitchen: { get_param: kitchen }
+      chef_version: { get_param: chef_version }
+      node:
+        ambari:
+          admin_user: { get_param: username }
+          admin_password: { get_attr: [ambari_password, value] }
+        rax:
+          firewall:
+            tcp: [ 8080, 8440 ]
+        run_list: ["recipe[yum]",
+                   "recipe[ambari::server]",
+                   "recipe[rax-firewall]"]
+
+outputs:
+  private_key:
+    value: { get_attr: [ssh_key, private_key] }
+    description: SSH Private Key
+
+  server_ip:
+    value: { get_attr: [ambari_server, accessIPv4] }
+    description: Server IP

@@ -1,0 +1,4 @@
+test-cases:
+- name: Default Build Test # Deploy using all default options
+  create:
+    timeout: 30
