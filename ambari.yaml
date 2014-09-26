@@ -58,11 +58,11 @@ resources:
 
   ambari_setup:
     type: "OS::Heat::ChefSolo"
-    depends_on: chef_server
+    depends_on: ambari_server
     properties:
       username: root
       private_key: { get_attr: [ssh_key, private_key] }
-      host: { get_attr: [linux_server, accessIPv4] }
+      host: { get_attr: [ambari_server, accessIPv4] }
       kitchen: { get_param: kitchen }
       chef_version: { get_param: chef_version }
       node:
