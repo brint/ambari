@@ -6,7 +6,7 @@ parameters:
   flavor:
     label: Server Size
     type: string
-    default: 1 GB Performance
+    default: 4 GB Performance
 
   image:
     label: Operating System
@@ -84,3 +84,7 @@ outputs:
   server_ip:
     value: { get_attr: [ambari_server, accessIPv4] }
     description: Server IP
+
+  ambari_password:
+    value: { get_attr: [ambari_password, value] }
+    description: Ambari Password
